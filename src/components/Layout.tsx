@@ -18,7 +18,7 @@ import {
 const navigation = [
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Teams', href: '/teams', icon: Building2 },
-  { name: 'Clients', href: '/', icon: FolderOpen },
+  { name: 'Resources', href: '/', icon: FolderOpen },
 ];
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {

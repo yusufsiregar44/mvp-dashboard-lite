@@ -27,6 +27,10 @@ interface DataContextType {
   removeTeamMember: (teamId: string, userId: string) => Promise<void>;
   addTeamResource: (assignment: TeamResource) => Promise<void>;
   removeTeamResource: (teamId: string, resourceId: string) => Promise<void>;
+  // Action 5 & 6: Team-Resource Assignment methods
+  assignResourceToTeam: (resourceId: string, teamId: string) => Promise<void>;
+  removeResourceFromTeam: (resourceId: string, teamId: string) => Promise<void>;
+  getResourceTeams: (resourceId: string) => Promise<TeamResource[]>;
   refreshData: () => Promise<void>;
 }
 
@@ -237,6 +241,43 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setTeamResources(prev => prev.filter(tr => !(tr.teamId === teamId && tr.resourceId === resourceId)));
   };
 
+  // Action 5: Assign Resource to Team
+  const assignResourceToTeam = async (resourceId: string, teamId: string) => {
+    const result = await apiService.assignClientToTeam(resourceId, teamId);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    // Add the new team-resource assignment to local state
+    const newAssignment: TeamResource = {
+      teamId,
+      resourceId,
+      assignedAt: new Date().toISOString(),
+    };
+    setTeamResources(prev => [...prev, newAssignment]);
+  };
+
+  // Action 6: Remove Resource from Team
+  const removeResourceFromTeam = async (resourceId: string, teamId: string) => {
+    const result = await apiService.removeClientFromTeam(resourceId, teamId);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    // Remove the team-resource assignment from local state
+    setTeamResources(prev => prev.filter(tr => !(tr.teamId === teamId && tr.resourceId === resourceId)));
+  };
+
+  // Get teams that have access to a specific resource
+  const getResourceTeams = async (resourceId: string): Promise<TeamResource[]> => {
+    const result = await apiService.getClientTeams(resourceId);
+    if (result.error) {
+      setError(result.error);
+      return [];
+    }
+    return result.data?.teams || [];
+  };
+
   const refreshData = async () => {
     await loadData();
   };
@@ -266,6 +307,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       removeTeamMember,
       addTeamResource,
       removeTeamResource,
+      assignResourceToTeam,
+      removeResourceFromTeam,
+      getResourceTeams,
       refreshData,
     }}>
       {children}

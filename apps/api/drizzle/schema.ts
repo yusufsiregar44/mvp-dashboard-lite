@@ -24,7 +24,6 @@ export const resources = pgTable("resources", {
 	id: text().default((gen_random_uuid())).primaryKey().notNull(),
 	name: text().notNull(),
 	type: text().notNull(),
-	segment: text().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
 

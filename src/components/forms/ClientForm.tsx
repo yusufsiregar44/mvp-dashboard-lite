@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Resource } from '@/types';
+import { Resource, TeamResource } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface ClientFormProps {
   client?: Resource;
@@ -15,13 +17,62 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ client, open, onOpenChange, onSuccess }: ClientFormProps) {
-  const { addResource, updateResource } = useData();
+  const { addResource, updateResource, teams, teamResources, assignResourceToTeam, removeResourceFromTeam, getResourceTeams } = useData();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [assignedTeams, setAssignedTeams] = useState<TeamResource[]>([]);
   const [formData, setFormData] = useState({
     name: client?.name || '',
     type: client?.type || 'client',
   });
+
+  // Load assigned teams when client changes
+  useEffect(() => {
+    if (client?.id) {
+      const clientTeams = teamResources.filter(tr => tr.resourceId === client.id);
+      setAssignedTeams(clientTeams);
+    } else {
+      setAssignedTeams([]);
+    }
+  }, [client?.id, teamResources]);
+
+  const handleAssignToTeam = async () => {
+    if (!selectedTeamId || !client?.id) return;
+    
+    try {
+      await assignResourceToTeam(client.id, selectedTeamId);
+      toast({
+        title: 'Success',
+        description: 'Resource assigned to team successfully',
+      });
+      setSelectedTeamId('');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to assign resource to team',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRemoveFromTeam = async (teamId: string) => {
+    if (!client?.id) return;
+    
+    try {
+      await removeResourceFromTeam(client.id, teamId);
+      toast({
+        title: 'Success',
+        description: 'Resource removed from team successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to remove resource from team',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +93,7 @@ export function ClientForm({ client, open, onOpenChange, onSuccess }: ClientForm
         });
         toast({
           title: 'Success',
-          description: 'Client created successfully',
+          description: 'Resource created successfully',
         });
       }
       onSuccess?.();
@@ -62,11 +113,11 @@ export function ClientForm({ client, open, onOpenChange, onSuccess }: ClientForm
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{client ? 'Edit Client' : 'Create Client'}</DialogTitle>
+          <DialogTitle>{client ? 'Edit Client' : 'Create Resource'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Client Name</Label>
+            <Label htmlFor="name">Resource Name</Label>
             <Input
               id="name"
               value={formData.name}
@@ -76,13 +127,84 @@ export function ClientForm({ client, open, onOpenChange, onSuccess }: ClientForm
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">Type</Label>
-            <Input
-              id="type"
+            <Select
               value={formData.type}
-              onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-              required
-            />
+              onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Client">Client</SelectItem>
+                <SelectItem value="Portfolio">Portfolio</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          
+          {/* Team Assignment Section - only show for existing clients */}
+          {client && (
+            <div className="space-y-4 border-t pt-4">
+              <div className="space-y-2">
+                <Label>Team Assignment</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedTeamId}
+                    onValueChange={setSelectedTeamId}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a team to assign" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teams
+                        .filter(team => !assignedTeams.some(at => at.teamId === team.id))
+                        .map(team => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button" 
+                    onClick={handleAssignToTeam}
+                    disabled={!selectedTeamId}
+                    size="sm"
+                  >
+                    Assign
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Show assigned teams */}
+              {assignedTeams.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Assigned Teams</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {assignedTeams.map(assignment => {
+                      const team = teams.find(t => t.id === assignment.teamId);
+                      return team ? (
+                        <Badge 
+                          key={assignment.teamId} 
+                          variant="secondary" 
+                          className="flex items-center gap-1"
+                        >
+                          {team.name}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromTeam(assignment.teamId)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

@@ -65,7 +65,7 @@ export const validateTeam = (req: Request, res: Response, next: NextFunction) =>
 
 export const validateResource = (req: Request, res: Response, next: NextFunction) => {
   const errors: ValidationErrorDetail[] = [];
-  const { name, type, segment } = req.body;
+  const { name, type } = req.body;
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     errors.push({ field: 'name', message: 'Resource name is required' });
@@ -73,10 +73,6 @@ export const validateResource = (req: Request, res: Response, next: NextFunction
 
   if (!type || typeof type !== 'string' || type.trim().length === 0) {
     errors.push({ field: 'type', message: 'Resource type is required' });
-  }
-
-  if (!segment || !['Private', 'Corporate', 'Retail'].includes(segment)) {
-    errors.push({ field: 'segment', message: 'Valid segment is required (Private, Corporate, Retail)' });
   }
 
   if (errors.length > 0) {

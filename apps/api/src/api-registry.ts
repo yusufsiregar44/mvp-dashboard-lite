@@ -25,6 +25,11 @@ export const apiRegistry: ApiEndpoint[] = [
   { method: 'POST', path: '/clients', tag: 'clients', summary: 'Create client' },
   { method: 'PUT', path: '/clients/:id', tag: 'clients', summary: 'Update client' },
   { method: 'DELETE', path: '/clients/:id', tag: 'clients', summary: 'Delete client' },
+  
+  // Action 5 & 6: Team-Resource Assignment
+  { method: 'POST', path: '/clients/:id/assign-to-team', tag: 'clients', summary: 'Assign client to team' },
+  { method: 'DELETE', path: '/clients/:id/remove-from-team', tag: 'clients', summary: 'Remove client from team' },
+  { method: 'GET', path: '/clients/:id/teams', tag: 'clients', summary: 'Get teams assigned to client' },
 ];
 
 

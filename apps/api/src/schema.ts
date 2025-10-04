@@ -20,7 +20,6 @@ export const resources = pgTable('resources', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   type: text('type').notNull(),
-  segment: text('segment').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

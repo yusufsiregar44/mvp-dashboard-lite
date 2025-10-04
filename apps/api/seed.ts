@@ -40,11 +40,11 @@ async function seed() {
 
     // Insert resources
     const insertedResources = await db.insert(resources).values([
-      { id: 'c1', name: 'TechCorp Industries', type: 'client', segment: 'Corporate' },
-      { id: 'c2', name: 'Global Finance Ltd', type: 'client', segment: 'Private' },
-      { id: 'c3', name: 'Startup Ventures', type: 'client', segment: 'Retail' },
-      { id: 'c4', name: 'MegaCorp Holdings', type: 'client', segment: 'Corporate' },
-      { id: 'c5', name: 'Family Trust Fund', type: 'client', segment: 'Private' },
+      { id: 'c1', name: 'TechCorp Industries', type: 'client' },
+      { id: 'c2', name: 'Global Finance Ltd', type: 'client' },
+      { id: 'c3', name: 'Startup Ventures', type: 'client' },
+      { id: 'c4', name: 'MegaCorp Holdings', type: 'client' },
+      { id: 'c5', name: 'Family Trust Fund', type: 'client' },
     ]).returning();
 
     console.log('✅ Inserted resources:', insertedResources.length);

@@ -81,7 +81,7 @@ export function TeamResourceForm({ team, assignment, open, onOpenChange, onSucce
               <SelectContent>
                 {availableResources.map(resource => (
                   <SelectItem key={resource.id} value={resource.id}>
-                    {resource.name} ({resource.segment})
+                    {resource.name}
                   </SelectItem>
                 ))}
               </SelectContent>
