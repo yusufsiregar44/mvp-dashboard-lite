@@ -7,14 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Search, Users as UsersIcon } from 'lucide-react';
+import { Search, Users as UsersIcon, Plus } from 'lucide-react';
 import { ClientAccessInfo } from '@/types';
+import { LoadingErrorWrapper } from '@/components/LoadingErrorWrapper';
+import { ClientForm } from '@/components/forms/ClientForm';
 
 export default function Clients() {
-  const { resources, teams, teamResources, teamMembers, users } = useData();
+  const { resources, teams, teamResources, teamMembers, users, loading, error, refreshData } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [showWithoutTeams, setShowWithoutTeams] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientAccessInfo | null>(null);
+  const [showClientForm, setShowClientForm] = useState(false);
 
   const clientsWithAccess = useMemo(() => {
     return resources.map(resource => {
@@ -67,14 +70,18 @@ export default function Clients() {
   }, [clientsWithAccess, searchQuery, showWithoutTeams]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Clients</h2>
-          <p className="text-muted-foreground">Manage client access and team assignments</p>
+    <LoadingErrorWrapper loading={loading} error={error} onRetry={refreshData}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Clients</h2>
+            <p className="text-muted-foreground">Manage client access and team assignments</p>
+          </div>
+          <Button onClick={() => setShowClientForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Client
+          </Button>
         </div>
-        <Button>Add Client</Button>
-      </div>
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
@@ -186,6 +193,14 @@ export default function Clients() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+
+      {/* Forms */}
+      <ClientForm
+        open={showClientForm}
+        onOpenChange={setShowClientForm}
+        onSuccess={refreshData}
+      />
+      </div>
+    </LoadingErrorWrapper>
   );
 }

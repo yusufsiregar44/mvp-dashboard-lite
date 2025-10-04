@@ -5,13 +5,26 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Users as UsersIcon, FolderOpen } from 'lucide-react';
+import { Search, Users as UsersIcon, FolderOpen, Plus, Trash2 } from 'lucide-react';
 import { Team } from '@/types';
+import { LoadingErrorWrapper } from '@/components/LoadingErrorWrapper';
+import { TeamForm } from '@/components/forms/TeamForm';
+import { TeamMemberForm } from '@/components/forms/TeamMemberForm';
+import { TeamResourceForm } from '@/components/forms/TeamResourceForm';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function Teams() {
-  const { teams, teamMembers, teamResources, users, resources } = useData();
+  const { teams, teamMembers, teamResources, users, resources, loading, error, refreshData, deleteTeam, removeTeamMember, removeTeamResource } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [showTeamForm, setShowTeamForm] = useState(false);
+  const [showMemberForm, setShowMemberForm] = useState(false);
+  const [showResourceForm, setShowResourceForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteAction, setDeleteAction] = useState<{
+    type: 'team' | 'member' | 'resource';
+    data: any;
+  } | null>(null);
 
   const teamsWithStats = useMemo(() => {
     return teams.map(team => {
@@ -57,15 +70,41 @@ export default function Teams() {
     return { members, clients };
   }, [selectedTeam, teamMembers, teamResources, users, resources]);
 
+  const handleDelete = async () => {
+    if (!deleteAction) return;
+
+    try {
+      switch (deleteAction.type) {
+        case 'team':
+          await deleteTeam(deleteAction.data.id);
+          break;
+        case 'member':
+          await removeTeamMember(deleteAction.data.teamId, deleteAction.data.userId);
+          break;
+        case 'resource':
+          await removeTeamResource(deleteAction.data.teamId, deleteAction.data.resourceId);
+          break;
+      }
+      setDeleteAction(null);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
-          <p className="text-muted-foreground">Manage teams and their members</p>
+    <LoadingErrorWrapper loading={loading} error={error} onRetry={refreshData}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
+            <p className="text-muted-foreground">Manage teams and their members</p>
+          </div>
+          <Button onClick={() => setShowTeamForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Team
+          </Button>
         </div>
-        <Button>Create Team</Button>
-      </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -126,7 +165,10 @@ export default function Teams() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">Team Members</h3>
-                  <Button size="sm">Add Member</Button>
+                  <Button size="sm" onClick={() => setShowMemberForm(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Member
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   {selectedTeamDetails.members.map((member, idx) => (
@@ -150,6 +192,19 @@ export default function Teams() {
                             )}
                           </div>
                         )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setDeleteAction({
+                              type: 'member',
+                              data: { teamId: member.teamId, userId: member.userId }
+                            });
+                            setShowDeleteConfirm(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -159,13 +214,33 @@ export default function Teams() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">Assigned Clients</h3>
-                  <Button size="sm">Assign Client</Button>
+                  <Button size="sm" onClick={() => setShowResourceForm(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Assign Client
+                  </Button>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   {selectedTeamDetails.clients.map((client, idx) => (
                     <div key={idx} className="p-3 border border-border rounded-lg">
-                      <p className="font-medium">{client.name}</p>
-                      <Badge variant="secondary" className="mt-1">{client.segment}</Badge>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{client.name}</p>
+                          <Badge variant="secondary" className="mt-1">{client.segment}</Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setDeleteAction({
+                              type: 'resource',
+                              data: { teamId: selectedTeam.id, resourceId: client.id }
+                            });
+                            setShowDeleteConfirm(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   {selectedTeamDetails.clients.length === 0 && (
@@ -177,6 +252,54 @@ export default function Teams() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+
+      {/* Forms */}
+      <TeamForm
+        open={showTeamForm}
+        onOpenChange={setShowTeamForm}
+        onSuccess={refreshData}
+      />
+
+      {selectedTeam && (
+        <>
+          <TeamMemberForm
+            team={selectedTeam}
+            open={showMemberForm}
+            onOpenChange={setShowMemberForm}
+            onSuccess={refreshData}
+          />
+          <TeamResourceForm
+            team={selectedTeam}
+            open={showResourceForm}
+            onOpenChange={setShowResourceForm}
+            onSuccess={refreshData}
+          />
+        </>
+      )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title={
+          deleteAction?.type === 'team' ? 'Delete Team' :
+          deleteAction?.type === 'member' ? 'Remove Team Member' :
+          'Remove Client Assignment'
+        }
+        description={
+          deleteAction?.type === 'team' ? 'Are you sure you want to delete this team? This action cannot be undone.' :
+          deleteAction?.type === 'member' ? 'Are you sure you want to remove this team member?' :
+          'Are you sure you want to remove this client assignment?'
+        }
+        confirmText={
+          deleteAction?.type === 'team' ? 'Delete' :
+          deleteAction?.type === 'member' ? 'Remove' :
+          'Remove'
+        }
+        variant="destructive"
+      />
+      </div>
+    </LoadingErrorWrapper>
   );
 }

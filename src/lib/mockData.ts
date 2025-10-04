@@ -38,19 +38,19 @@ export const resources: Resource[] = [
 // User Managers (hierarchy)
 export const userManagers: UserManager[] = [
   // John (Head) manages Sarah and Mike (Senior RMs)
-  { userId: '2', managerId: '1', managerType: 'line_manager', createdAt: '2024-01-05' },
-  { userId: '3', managerId: '1', managerType: 'line_manager', createdAt: '2024-01-10' },
+  { userId: '2', managerId: '1', createdAt: '2024-01-05' },
+  { userId: '3', managerId: '1', createdAt: '2024-01-10' },
   
   // Sarah manages Emma and David
-  { userId: '4', managerId: '2', managerType: 'line_manager', createdAt: '2024-02-01' },
-  { userId: '5', managerId: '2', managerType: 'line_manager', createdAt: '2024-02-05' },
+  { userId: '4', managerId: '2', createdAt: '2024-02-01' },
+  { userId: '5', managerId: '2', createdAt: '2024-02-05' },
   
   // Mike manages Lisa and Tom
-  { userId: '6', managerId: '3', managerType: 'line_manager', createdAt: '2024-02-10' },
-  { userId: '7', managerId: '3', managerType: 'line_manager', createdAt: '2024-02-15' },
+  { userId: '6', managerId: '3', createdAt: '2024-02-10' },
+  { userId: '7', managerId: '3', createdAt: '2024-02-15' },
   
   // Anna (Senior RM) manages some RMs and reports to John
-  { userId: '8', managerId: '1', managerType: 'line_manager', createdAt: '2024-02-20' },
+  { userId: '8', managerId: '1', createdAt: '2024-02-20' },
 ];
 
 // Team Members

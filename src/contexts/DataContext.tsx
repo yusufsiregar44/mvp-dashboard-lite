@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Team, Resource, UserManager, TeamMember, TeamResource } from '@/types';
+import { apiService } from '@/lib/api';
 import * as mockData from '@/lib/mockData';
 
 interface DataContextType {
@@ -9,21 +10,24 @@ interface DataContextType {
   userManagers: UserManager[];
   teamMembers: TeamMember[];
   teamResources: TeamResource[];
-  addUser: (user: User) => void;
-  updateUser: (id: string, user: Partial<User>) => void;
-  deleteUser: (id: string) => void;
-  addTeam: (team: Team) => void;
-  updateTeam: (id: string, team: Partial<Team>) => void;
-  deleteTeam: (id: string) => void;
-  addResource: (resource: Resource) => void;
-  updateResource: (id: string, resource: Partial<Resource>) => void;
-  deleteResource: (id: string) => void;
-  addUserManager: (relation: UserManager) => void;
-  removeUserManager: (userId: string, managerId: string) => void;
-  addTeamMember: (member: TeamMember) => void;
-  removeTeamMember: (teamId: string, userId: string) => void;
-  addTeamResource: (assignment: TeamResource) => void;
-  removeTeamResource: (teamId: string, resourceId: string) => void;
+  loading: boolean;
+  error: string | null;
+  addUser: (user: User) => Promise<void>;
+  updateUser: (id: string, user: Partial<User>) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  addTeam: (team: Team) => Promise<void>;
+  updateTeam: (id: string, team: Partial<Team>) => Promise<void>;
+  deleteTeam: (id: string) => Promise<void>;
+  addResource: (resource: Resource) => Promise<void>;
+  updateResource: (id: string, resource: Partial<Resource>) => Promise<void>;
+  deleteResource: (id: string) => Promise<void>;
+  addUserManager: (relation: UserManager) => Promise<void>;
+  removeUserManager: (userId: string, managerId: string) => Promise<void>;
+  addTeamMember: (member: TeamMember) => Promise<void>;
+  removeTeamMember: (teamId: string, userId: string) => Promise<void>;
+  addTeamResource: (assignment: TeamResource) => Promise<void>;
+  removeTeamResource: (teamId: string, resourceId: string) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -37,77 +41,205 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [userManagers, setUserManagers] = useState<UserManager[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [teamResources, setTeamResources] = useState<TeamResource[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load from localStorage or use mock data
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const data = JSON.parse(stored);
-      setUsers(data.users || mockData.users);
-      setTeams(data.teams || mockData.teams);
-      setResources(data.resources || mockData.resources);
-      setUserManagers(data.userManagers || mockData.userManagers);
-      setTeamMembers(data.teamMembers || mockData.teamMembers);
-      setTeamResources(data.teamResources || mockData.teamResources);
-    } else {
+  // Load data from API
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Load all data in parallel
+      const [usersRes, teamsRes, resourcesRes, userManagersRes, teamMembersRes, teamResourcesRes] = await Promise.all([
+        apiService.getUsers(),
+        apiService.getTeams(),
+        apiService.getClients(),
+        apiService.getUserManagers(),
+        apiService.getTeamMembers(),
+        apiService.getTeamResources(),
+      ]);
+
+      if (usersRes.error) throw new Error(usersRes.error);
+      if (teamsRes.error) throw new Error(teamsRes.error);
+      if (resourcesRes.error) throw new Error(resourcesRes.error);
+      if (userManagersRes.error) throw new Error(userManagersRes.error);
+      if (teamMembersRes.error) throw new Error(teamMembersRes.error);
+      if (teamResourcesRes.error) throw new Error(teamResourcesRes.error);
+
+      setUsers(usersRes.data?.items || []);
+      setTeams(teamsRes.data?.items || []);
+      setResources(resourcesRes.data?.items || []);
+      setUserManagers(userManagersRes.data || []);
+      setTeamMembers(teamMembersRes.data || []);
+      setTeamResources(teamResourcesRes.data || []);
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+      
+      // Fallback to mock data
       setUsers(mockData.users);
       setTeams(mockData.teams);
       setResources(mockData.resources);
       setUserManagers(mockData.userManagers);
       setTeamMembers(mockData.teamMembers);
       setTeamResources(mockData.teamResources);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      users,
-      teams,
-      resources,
-      userManagers,
-      teamMembers,
-      teamResources,
-    }));
-  }, [users, teams, resources, userManagers, teamMembers, teamResources]);
+  // User CRUD operations
+  const addUser = async (user: User) => {
+    const result = await apiService.createUser(user);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setUsers(prev => [...prev, result.data!]);
+  };
 
-  const addUser = (user: User) => setUsers(prev => [...prev, user]);
-  const updateUser = (id: string, updates: Partial<User>) => 
+  const updateUser = async (id: string, updates: Partial<User>) => {
+    const result = await apiService.updateUser(id, updates);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
-  const deleteUser = (id: string) => {
+  };
+
+  const deleteUser = async (id: string) => {
+    const result = await apiService.deleteUser(id);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setUsers(prev => prev.filter(u => u.id !== id));
     setUserManagers(prev => prev.filter(um => um.userId !== id && um.managerId !== id));
     setTeamMembers(prev => prev.filter(tm => tm.userId !== id));
   };
 
-  const addTeam = (team: Team) => setTeams(prev => [...prev, team]);
-  const updateTeam = (id: string, updates: Partial<Team>) => 
+  // Team CRUD operations
+  const addTeam = async (team: Team) => {
+    const result = await apiService.createTeam(team);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setTeams(prev => [...prev, result.data!]);
+  };
+
+  const updateTeam = async (id: string, updates: Partial<Team>) => {
+    const result = await apiService.updateTeam(id, updates);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setTeams(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-  const deleteTeam = (id: string) => {
+  };
+
+  const deleteTeam = async (id: string) => {
+    const result = await apiService.deleteTeam(id);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setTeams(prev => prev.filter(t => t.id !== id));
     setTeamMembers(prev => prev.filter(tm => tm.teamId !== id));
     setTeamResources(prev => prev.filter(tr => tr.teamId !== id));
   };
 
-  const addResource = (resource: Resource) => setResources(prev => [...prev, resource]);
-  const updateResource = (id: string, updates: Partial<Resource>) => 
+  // Resource CRUD operations
+  const addResource = async (resource: Resource) => {
+    const result = await apiService.createClient(resource);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setResources(prev => [...prev, result.data!]);
+  };
+
+  const updateResource = async (id: string, updates: Partial<Resource>) => {
+    const result = await apiService.updateClient(id, updates);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setResources(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
-  const deleteResource = (id: string) => {
+  };
+
+  const deleteResource = async (id: string) => {
+    const result = await apiService.deleteClient(id);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setResources(prev => prev.filter(r => r.id !== id));
     setTeamResources(prev => prev.filter(tr => tr.resourceId !== id));
   };
 
-  const addUserManager = (relation: UserManager) => setUserManagers(prev => [...prev, relation]);
-  const removeUserManager = (userId: string, managerId: string) => 
+  // Relationship operations
+  const addUserManager = async (relation: UserManager) => {
+    const result = await apiService.createUserManager(relation);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setUserManagers(prev => [...prev, result.data!]);
+  };
+
+  const removeUserManager = async (userId: string, managerId: string) => {
+    const result = await apiService.deleteUserManager(userId, managerId);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setUserManagers(prev => prev.filter(um => !(um.userId === userId && um.managerId === managerId)));
+  };
 
-  const addTeamMember = (member: TeamMember) => setTeamMembers(prev => [...prev, member]);
-  const removeTeamMember = (teamId: string, userId: string) => 
+  const addTeamMember = async (member: TeamMember) => {
+    const result = await apiService.createTeamMember(member);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setTeamMembers(prev => [...prev, result.data!]);
+  };
+
+  const removeTeamMember = async (teamId: string, userId: string) => {
+    const result = await apiService.deleteTeamMember(teamId, userId);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setTeamMembers(prev => prev.filter(tm => !(tm.teamId === teamId && tm.userId === userId)));
+  };
 
-  const addTeamResource = (assignment: TeamResource) => setTeamResources(prev => [...prev, assignment]);
-  const removeTeamResource = (teamId: string, resourceId: string) => 
+  const addTeamResource = async (assignment: TeamResource) => {
+    const result = await apiService.createTeamResource(assignment);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setTeamResources(prev => [...prev, result.data!]);
+  };
+
+  const removeTeamResource = async (teamId: string, resourceId: string) => {
+    const result = await apiService.deleteTeamResource(teamId, resourceId);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     setTeamResources(prev => prev.filter(tr => !(tr.teamId === teamId && tr.resourceId === resourceId)));
+  };
+
+  const refreshData = async () => {
+    await loadData();
+  };
 
   return (
     <DataContext.Provider value={{
@@ -117,6 +249,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       userManagers,
       teamMembers,
       teamResources,
+      loading,
+      error,
       addUser,
       updateUser,
       deleteUser,
@@ -132,6 +266,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       removeTeamMember,
       addTeamResource,
       removeTeamResource,
+      refreshData,
     }}>
       {children}
     </DataContext.Provider>

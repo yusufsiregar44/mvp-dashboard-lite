@@ -1,7 +1,5 @@
 export type UserRole = 'RM' | 'Senior RM' | 'Head of RM';
 
-export type ManagerType = 'line_manager' | 'functional' | 'dotted_line';
-
 export type AccessType = 'direct' | 'manager';
 
 export type ResourceSegment = 'Private' | 'Corporate' | 'Retail';
@@ -32,7 +30,6 @@ export interface Resource {
 export interface UserManager {
   userId: string;
   managerId: string;
-  managerType: ManagerType;
   createdAt: string;
 }
 
