@@ -95,10 +95,10 @@ export default function Clients() {
             onCheckedChange={(checked) => setShowWithoutTeams(checked === true)}
           />
           <Label htmlFor="without-teams-clients" className="cursor-pointer">
-            Show clients without teams
+            Show resources without teams
           </Label>
         </div>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Checkbox
             id="without-teams"
             // checked={showWithoutTeams}
@@ -106,8 +106,8 @@ export default function Clients() {
           />
           <Label htmlFor="without-teams-portfolios" className="cursor-pointer">
             Show portfolios without teams
-          </Label>
-        </div>
+          </Label> */}
+        {/* </div> */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

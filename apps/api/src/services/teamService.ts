@@ -142,11 +142,11 @@ export class TeamService {
       throw new Error('Cannot create circular management relationship');
     }
     
-    // Check depth
-    const depth = await this.getManagementDepth(managerId);
-    if (depth >= 3) {
-      throw new Error('Cannot exceed 3-level management depth');
-    }
+    // // Check depth TODO: assess if necessary
+    // const depth = await this.getManagementDepth(managerId);
+    // if (depth >= 3) {
+    //   throw new Error('Cannot exceed 3-level management depth');
+    // }
     
     // 2. Insert into user_managers
     await db.insert(userManagers).values({
@@ -529,7 +529,8 @@ export class TeamService {
     const visited = new Set();
     
     const getDirectManagers = async (currentUserId: string, depth: number) => {
-      if (depth >= maxDepth || visited.has(currentUserId)) return;
+      // TODO: assess if necessary
+      // if (depth >= maxDepth || visited.has(currentUserId)) return;
       
       visited.add(currentUserId);
       
