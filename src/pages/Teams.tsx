@@ -225,7 +225,6 @@ export default function Teams() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">{client.name}</p>
-                          <Badge variant="secondary" className="mt-1">{client.segment}</Badge>
                         </div>
                         <Button
                           size="sm"

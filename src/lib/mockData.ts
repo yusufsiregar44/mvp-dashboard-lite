@@ -23,16 +23,16 @@ export const teams: Team[] = [
 
 // Resources (Clients)
 export const resources: Resource[] = [
-  { id: 'c1', name: 'Acme Corporation', type: 'client', segment: 'Corporate', createdAt: '2024-01-01' },
-  { id: 'c2', name: 'Smith Family Trust', type: 'client', segment: 'Private', createdAt: '2024-01-05' },
-  { id: 'c3', name: 'TechStart Inc.', type: 'client', segment: 'Corporate', createdAt: '2024-01-10' },
-  { id: 'c4', name: 'Johnson Holdings', type: 'client', segment: 'Private', createdAt: '2024-01-15' },
-  { id: 'c5', name: 'Global Retail Ltd', type: 'client', segment: 'Retail', createdAt: '2024-01-20' },
-  { id: 'c6', name: 'Anderson Wealth', type: 'client', segment: 'Private', createdAt: '2024-01-25' },
-  { id: 'c7', name: 'Metro Bank Partners', type: 'client', segment: 'Corporate', createdAt: '2024-02-01' },
-  { id: 'c8', name: 'Legacy Investments', type: 'client', segment: 'Private', createdAt: '2024-02-05' },
-  { id: 'c9', name: 'Sunrise Ventures', type: 'client', segment: 'Corporate', createdAt: '2024-02-10' },
-  { id: 'c10', name: 'Martinez Family Office', type: 'client', segment: 'Private', createdAt: '2024-02-15' },
+  { id: 'c1', name: 'Acme Corporation', type: 'client', createdAt: '2024-01-01' },
+  { id: 'c2', name: 'Smith Family Trust', type: 'client', createdAt: '2024-01-05' },
+  { id: 'c3', name: 'TechStart Inc.', type: 'client', createdAt: '2024-01-10' },
+  { id: 'c4', name: 'Johnson Holdings', type: 'client', createdAt: '2024-01-15' },
+  { id: 'c5', name: 'Global Retail Ltd', type: 'client', createdAt: '2024-01-20' },
+  { id: 'c6', name: 'Anderson Wealth', type: 'client', createdAt: '2024-01-25' },
+  { id: 'c7', name: 'Metro Bank Partners', type: 'client', createdAt: '2024-02-01' },
+  { id: 'c8', name: 'Legacy Investments', type: 'client', createdAt: '2024-02-05' },
+  { id: 'c9', name: 'Sunrise Ventures', type: 'client', createdAt: '2024-02-10' },
+  { id: 'c10', name: 'Martinez Family Office', type: 'client', createdAt: '2024-02-15' },
 ];
 
 // User Managers (hierarchy)

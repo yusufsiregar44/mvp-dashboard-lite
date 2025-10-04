@@ -61,8 +61,7 @@ export default function Clients() {
 
     if (searchQuery) {
       filtered = filtered.filter(c =>
-        c.resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.resource.segment.toLowerCase().includes(searchQuery.toLowerCase())
+        c.resource.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -74,20 +73,16 @@ export default function Clients() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Clients</h2>
-            <p className="text-muted-foreground">Manage client access and team assignments</p>
+            <h2 className="text-3xl font-bold tracking-tight">Resources</h2>
+            <p className="text-muted-foreground">Manage resources access and team assignments</p>
           </div>
-          <Button onClick={() => setShowClientForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
         </div>
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search clients..."
+            placeholder="Search resources..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -99,8 +94,18 @@ export default function Clients() {
             checked={showWithoutTeams}
             onCheckedChange={(checked) => setShowWithoutTeams(checked === true)}
           />
-          <Label htmlFor="without-teams" className="cursor-pointer">
+          <Label htmlFor="without-teams-clients" className="cursor-pointer">
             Show clients without teams
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="without-teams"
+            // checked={showWithoutTeams}
+            // onCheckedChange={(checked) => setShowWithoutTeams(checked === true)}
+          />
+          <Label htmlFor="without-teams-portfolios" className="cursor-pointer">
+            Show portfolios without teams
           </Label>
         </div>
       </div>
@@ -117,7 +122,7 @@ export default function Clients() {
                 <div className="flex-1">
                   <CardTitle className="text-lg">{client.resource.name}</CardTitle>
                   <Badge variant="secondary" className="mt-2">
-                    {client.resource.segment}
+                    {client.resource.type}
                   </Badge>
                 </div>
               </div>
@@ -145,7 +150,6 @@ export default function Clients() {
           {selectedClient && (
             <div className="space-y-6">
               <div className="flex gap-2">
-                <Badge variant="secondary">{selectedClient.resource.segment}</Badge>
                 <Badge variant="outline">{selectedClient.totalUsers} total users</Badge>
               </div>
 

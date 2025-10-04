@@ -2,7 +2,6 @@ export type UserRole = 'RM' | 'Senior RM' | 'Head of RM';
 
 export type AccessType = 'direct' | 'manager';
 
-export type ResourceSegment = 'Private' | 'Corporate' | 'Retail';
 
 export interface User {
   id: string;
@@ -23,7 +22,6 @@ export interface Resource {
   id: string;
   name: string;
   type: string;
-  segment: ResourceSegment;
   createdAt: string;
 }
 

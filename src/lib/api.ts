@@ -135,6 +135,25 @@ class ApiService {
     });
   }
 
+  // Action 5 & 6: Team-Resource Assignment APIs
+  async assignClientToTeam(clientId: string, teamId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/clients/${clientId}/assign-to-team`, {
+      method: 'POST',
+      body: JSON.stringify({ teamId }),
+    });
+  }
+
+  async removeClientFromTeam(clientId: string, teamId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/clients/${clientId}/remove-from-team`, {
+      method: 'DELETE',
+      body: JSON.stringify({ teamId }),
+    });
+  }
+
+  async getClientTeams(clientId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/clients/${clientId}/teams`);
+  }
+
   // Relationship APIs (to be implemented)
   async getUserManagers(): Promise<ApiResponse<any[]>> {
     return this.request<any[]>('/user-managers');
