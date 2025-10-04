@@ -81,7 +81,11 @@ actionsRouter.post('/remove-manager', async (req, res) => {
       return res.status(400).json({ error: 'userId and managerId are required' });
     }
     
+    console.log(`Attempting to remove manager relationship: ${managerId} -> ${userId}`);
+    
     const results = await TeamService.removeManager(userId, managerId);
+    
+    console.log('Remove manager results:', results);
     
     res.status(200).json({
       success: true,
@@ -89,8 +93,11 @@ actionsRouter.post('/remove-manager', async (req, res) => {
       results
     });
   } catch (error) {
+    console.error('Error removing manager:', error);
     res.status(500).json({ 
-      error: (error as Error).message || 'Failed to remove manager' 
+      error: (error as Error).message || 'Failed to remove manager',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     });
   }
 });

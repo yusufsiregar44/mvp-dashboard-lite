@@ -62,8 +62,12 @@ userManagersRouter.delete('/:userId/:managerId',
     try {
       const { userId, managerId } = req.params;
       
+      console.log(`Attempting to remove manager relationship: ${managerId} -> ${userId}`);
+      
       // Use the core business logic
       const results = await TeamService.removeManager(userId, managerId);
+      
+      console.log('Remove manager results:', results);
       
       res.status(200).json({ 
         success: true, 
@@ -71,7 +75,12 @@ userManagersRouter.delete('/:userId/:managerId',
         results 
       });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to delete manager relationship' });
+      console.error('Error removing manager relationship:', error);
+      res.status(500).json({ 
+        error: 'Failed to delete manager relationship',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   }
 );
