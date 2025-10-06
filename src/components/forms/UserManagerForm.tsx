@@ -16,7 +16,7 @@ interface UserManagerFormProps {
 }
 
 export function UserManagerForm({ user, relation, open, onOpenChange, onSuccess }: UserManagerFormProps) {
-  const { users, userManagers, addUserManager } = useData();
+  const { users, userManagers, assignManager } = useData();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,22 +40,19 @@ export function UserManagerForm({ user, relation, open, onOpenChange, onSuccess 
     setLoading(true);
 
     try {
-      await addUserManager({
-        userId: user.id,
-        managerId: formData.managerId,
-        createdAt: new Date().toISOString(),
-      });
+      // Use Key Action 3: Assign Manager (with automatic team inheritance)
+      await assignManager(user.id, formData.managerId);
 
       toast({
         title: 'Success',
-        description: 'Manager relationship added successfully',
+        description: 'Manager assigned successfully with automatic team inheritance',
       });
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to add manager relationship',
+        description: error instanceof Error ? error.message : 'Failed to assign manager',
         variant: 'destructive',
       });
     } finally {
@@ -67,9 +64,12 @@ export function UserManagerForm({ user, relation, open, onOpenChange, onSuccess 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Manager for {user.name}</DialogTitle>
+          <DialogTitle>Assign Manager for {user.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-sm text-muted-foreground mb-4">
+            This will assign a manager and automatically grant them access to all teams where {user.name} is a direct member.
+          </div>
           <div className="space-y-2">
             <Label htmlFor="manager">Manager</Label>
             <Select
@@ -93,7 +93,7 @@ export function UserManagerForm({ user, relation, open, onOpenChange, onSuccess 
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !formData.managerId}>
-              {loading ? 'Adding...' : 'Add Manager'}
+              {loading ? 'Assigning...' : 'Assign Manager'}
             </Button>
           </div>
         </form>

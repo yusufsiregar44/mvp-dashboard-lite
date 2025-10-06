@@ -204,6 +204,49 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Key Actions API endpoints
+  async addUserToTeam(userId: string, teamId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('/actions/add-user-to-team', {
+      method: 'POST',
+      body: JSON.stringify({ userId, teamId }),
+    });
+  }
+
+  async removeUserFromTeam(userId: string, teamId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('/actions/remove-user-from-team', {
+      method: 'POST',
+      body: JSON.stringify({ userId, teamId }),
+    });
+  }
+
+  async assignManager(userId: string, managerId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('/actions/assign-manager', {
+      method: 'POST',
+      body: JSON.stringify({ userId, managerId }),
+    });
+  }
+
+  async removeManager(userId: string, managerId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('/actions/remove-manager', {
+      method: 'POST',
+      body: JSON.stringify({ userId, managerId }),
+    });
+  }
+
+  async assignResourceToTeam(teamId: string, resourceId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('/actions/assign-resource-to-team', {
+      method: 'POST',
+      body: JSON.stringify({ teamId, resourceId }),
+    });
+  }
+
+  async removeResourceFromTeam(teamId: string, resourceId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('/actions/remove-resource-from-team', {
+      method: 'POST',
+      body: JSON.stringify({ teamId, resourceId }),
+    });
+  }
 }
 
 export const apiService = new ApiService();

@@ -12,7 +12,7 @@ interface DataContextType {
   teamResources: TeamResource[];
   loading: boolean;
   error: string | null;
-  addUser: (user: User) => Promise<void>;
+  addUser: (user: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
   updateUser: (id: string, user: Partial<User>) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   addTeam: (team: Team) => Promise<void>;
@@ -23,8 +23,16 @@ interface DataContextType {
   deleteResource: (id: string) => Promise<void>;
   addUserManager: (relation: UserManager) => Promise<void>;
   removeUserManager: (userId: string, managerId: string) => Promise<void>;
+  // Key Action 3: Assign Manager (with automatic team inheritance)
+  assignManager: (userId: string, managerId: string) => Promise<void>;
+  // Key Action 4: Remove Manager (with access recalculation)
+  removeManager: (userId: string, managerId: string) => Promise<void>;
   addTeamMember: (member: TeamMember) => Promise<void>;
   removeTeamMember: (teamId: string, userId: string) => Promise<void>;
+  // Key Action 1: Add User to Team (with automatic manager inheritance)
+  addUserToTeam: (userId: string, teamId: string) => Promise<void>;
+  // Key Action 2: Remove User from Team (with cleanup logic)
+  removeUserFromTeam: (userId: string, teamId: string) => Promise<void>;
   addTeamResource: (assignment: TeamResource) => Promise<void>;
   removeTeamResource: (teamId: string, resourceId: string) => Promise<void>;
   // Action 5 & 6: Team-Resource Assignment methods
@@ -98,11 +106,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // User CRUD operations
-  const addUser = async (user: User) => {
+  const addUser = async (user: Omit<User, 'id' | 'createdAt'>) => {
     const result = await apiService.createUser(user);
     if (result.error) {
       setError(result.error);
-      return;
+      throw new Error(result.error);
     }
     setUsers(prev => [...prev, result.data!]);
   };
@@ -205,6 +213,28 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setUserManagers(prev => prev.filter(um => !(um.userId === userId && um.managerId === managerId)));
   };
 
+  // Key Action 3: Assign Manager (with automatic team inheritance)
+  const assignManager = async (userId: string, managerId: string) => {
+    const result = await apiService.assignManager(userId, managerId);
+    if (result.error) {
+      setError(result.error);
+      throw new Error(result.error);
+    }
+    // Refresh data to get updated team memberships and manager relationships
+    await refreshData();
+  };
+
+  // Key Action 4: Remove Manager (with access recalculation)
+  const removeManager = async (userId: string, managerId: string) => {
+    const result = await apiService.removeManager(userId, managerId);
+    if (result.error) {
+      setError(result.error);
+      throw new Error(result.error);
+    }
+    // Refresh data to reflect team access changes
+    await refreshData();
+  };
+
   const addTeamMember = async (member: TeamMember) => {
     const result = await apiService.createTeamMember(member);
     if (result.error) {
@@ -221,6 +251,28 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setTeamMembers(prev => prev.filter(tm => !(tm.teamId === teamId && tm.userId === userId)));
+  };
+
+  // Key Action 1: Add User to Team (with automatic manager inheritance)
+  const addUserToTeam = async (userId: string, teamId: string) => {
+    const result = await apiService.addUserToTeam(userId, teamId);
+    if (result.error) {
+      setError(result.error);
+      throw new Error(result.error);
+    }
+    // Refresh team members data to get the updated memberships including managers
+    await refreshData();
+  };
+
+  // Key Action 2: Remove User from Team (with cleanup logic)
+  const removeUserFromTeam = async (userId: string, teamId: string) => {
+    const result = await apiService.removeUserFromTeam(userId, teamId);
+    if (result.error) {
+      setError(result.error);
+      throw new Error(result.error);
+    }
+    // Refresh team members data to reflect the cleanup
+    await refreshData();
   };
 
   const addTeamResource = async (assignment: TeamResource) => {
@@ -303,8 +355,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       deleteResource,
       addUserManager,
       removeUserManager,
+      assignManager,
+      removeManager,
       addTeamMember,
       removeTeamMember,
+      addUserToTeam,
+      removeUserFromTeam,
       addTeamResource,
       removeTeamResource,
       assignResourceToTeam,

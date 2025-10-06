@@ -1,4 +1,4 @@
-export type UserRole = 'RM' | 'Senior RM' | 'Head of RM';
+export type UserRole = 'RM' | 'Senior RM' | 'Head of RM' | 'PM' | 'CIO' | 'CEO';
 
 export type AccessType = 'direct' | 'manager';
 

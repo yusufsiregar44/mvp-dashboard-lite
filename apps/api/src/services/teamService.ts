@@ -156,15 +156,10 @@ export class TeamService {
     
     results.push(`✓ ${managerId} now manages ${userId}`);
     
-    // 3. Find all teams where user is direct member
+    // 3. Find all teams where user has access (both direct and manager)
     const userTeams = await db.select()
       .from(teamMembers)
-      .where(
-        and(
-          eq(teamMembers.userId, userId),
-          eq(teamMembers.accessType, 'direct')
-        )
-      );
+      .where(eq(teamMembers.userId, userId));
     
     // 4. Add manager to those teams with 'manager' access type
     for (const team of userTeams) {
@@ -180,7 +175,19 @@ export class TeamService {
         )
         .limit(1);
       
-      if (existingDirect.length === 0) {
+      // Check if manager already has manager access to this team
+      const existingManager = await db.select()
+        .from(teamMembers)
+        .where(
+          and(
+            eq(teamMembers.teamId, team.teamId),
+            eq(teamMembers.userId, managerId),
+            eq(teamMembers.accessType, 'manager')
+          )
+        )
+        .limit(1);
+      
+      if (existingDirect.length === 0 && existingManager.length === 0) {
         await db.insert(teamMembers).values({
           teamId: team.teamId,
           userId: managerId,
@@ -188,7 +195,8 @@ export class TeamService {
           grantedVia: userId,
         });
         
-        results.push(`✓ ${managerId} inherited access to ${team.teamId} (via ${userId})`);
+        const accessType = team.accessType === 'direct' ? 'direct member' : 'manager access';
+        results.push(`✓ ${managerId} inherited access to ${team.teamId} (via ${userId}'s ${accessType})`);
       }
     }
     
@@ -276,18 +284,13 @@ export class TeamService {
       results.push(`✓ ${managerId} no longer manages ${userId}`);
       console.log('Step 1 completed: Manager relationship deleted');
       
-      // 2. For each team where user is direct member
-      console.log('Step 2: Finding teams where user is direct member');
+      // 2. For each team where user has access (both direct and manager)
+      console.log('Step 2: Finding teams where user has access (both direct and manager)');
       const userTeams = await db.select()
         .from(teamMembers)
-        .where(
-          and(
-            eq(teamMembers.userId, userId),
-            eq(teamMembers.accessType, 'direct')
-          )
-        );
+        .where(eq(teamMembers.userId, userId));
       
-      console.log(`Found ${userTeams.length} teams where user is direct member:`, userTeams.map(t => t.teamId));
+      console.log(`Found ${userTeams.length} teams where user has access:`, userTeams.map(t => `${t.teamId} (${t.accessType})`));
       
       for (const team of userTeams) {
         console.log(`Processing team: ${team.teamId}`);

@@ -13,7 +13,7 @@ import { UserManagerForm } from '@/components/forms/UserManagerForm';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function Users() {
-  const { users, userManagers, teamMembers, teams, loading, error, refreshData, deleteUser, removeUserManager } = useData();
+  const { users, userManagers, teamMembers, teams, loading, error, refreshData, deleteUser, removeManager } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserForm, setShowUserForm] = useState(false);
@@ -89,7 +89,7 @@ export default function Users() {
 
   const handleRemoveManager = async () => {
     if (managerToRemove) {
-      await removeUserManager(managerToRemove.userId, managerToRemove.managerId);
+      await removeManager(managerToRemove.userId, managerToRemove.managerId);
       setManagerToRemove(null);
       setShowDeleteConfirm(false);
     }

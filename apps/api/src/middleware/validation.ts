@@ -27,8 +27,8 @@ export const validateUser = (req: Request, res: Response, next: NextFunction) =>
     errors.push({ field: 'email', message: 'Valid email is required' });
   }
 
-  if (!role || !['RM', 'Senior RM', 'Head of RM'].includes(role)) {
-    errors.push({ field: 'role', message: 'Valid role is required (RM, Senior RM, Head of RM)' });
+  if (!role || !['RM', 'Senior RM', 'Head of RM', 'PM', 'CIO', 'CEO'].includes(role)) {
+    errors.push({ field: 'role', message: 'Valid role is required (RM, Senior RM, Head of RM, PM, CIO, CEO)' });
   }
 
   if (errors.length > 0) {

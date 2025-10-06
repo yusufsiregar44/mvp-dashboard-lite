@@ -16,13 +16,11 @@ interface TeamMemberFormProps {
 }
 
 export function TeamMemberForm({ team, member, open, onOpenChange, onSuccess }: TeamMemberFormProps) {
-  const { users, teamMembers, addTeamMember } = useData();
+  const { users, teamMembers, addUserToTeam } = useData();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     userId: member?.userId || '',
-    accessType: member?.accessType || 'direct' as AccessType,
-    grantedVia: member?.grantedVia || '',
   });
 
   // Get available users (not already in team)
@@ -36,37 +34,24 @@ export function TeamMemberForm({ team, member, open, onOpenChange, onSuccess }: 
     );
   }, [users, teamMembers, team.id, member?.userId]);
 
-  // Get users who can grant access (direct members of the team)
-  const grantors = useMemo(() => {
-    return teamMembers
-      .filter(tm => tm.teamId === team.id && tm.accessType === 'direct')
-      .map(tm => users.find(u => u.id === tm.userId))
-      .filter(Boolean) as User[];
-  }, [teamMembers, users, team.id]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await addTeamMember({
-        teamId: team.id,
-        userId: formData.userId,
-        accessType: formData.accessType,
-        grantedVia: formData.accessType === 'manager' ? formData.grantedVia : null,
-        joinedAt: new Date().toISOString(),
-      });
+      // Use Key Action 1: Add User to Team (with automatic manager inheritance)
+      await addUserToTeam(formData.userId, team.id);
 
       toast({
         title: 'Success',
-        description: 'Team member added successfully',
+        description: 'User added to team successfully with automatic manager inheritance',
       });
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to add team member',
+        description: error instanceof Error ? error.message : 'Failed to add user to team',
         variant: 'destructive',
       });
     } finally {
@@ -78,9 +63,12 @@ export function TeamMemberForm({ team, member, open, onOpenChange, onSuccess }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Team Member to {team.name}</DialogTitle>
+          <DialogTitle>Add User to {team.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-sm text-muted-foreground mb-4">
+            This will add the user as a direct member and automatically add all their managers with inherited access.
+          </div>
           <div className="space-y-2">
             <Label htmlFor="user">User</Label>
             <Select
@@ -99,47 +87,12 @@ export function TeamMemberForm({ team, member, open, onOpenChange, onSuccess }: 
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="accessType">Access Type</Label>
-            <Select
-              value={formData.accessType}
-              onValueChange={(value: AccessType) => setFormData(prev => ({ ...prev, accessType: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="direct">Direct</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {formData.accessType === 'manager' && (
-            <div className="space-y-2">
-              <Label htmlFor="grantedVia">Granted Via</Label>
-              <Select
-                value={formData.grantedVia}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, grantedVia: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a direct member" />
-                </SelectTrigger>
-                <SelectContent>
-                  {grantors.map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !formData.userId}>
-              {loading ? 'Adding...' : 'Add Member'}
+              {loading ? 'Adding...' : 'Add User to Team'}
             </Button>
           </div>
         </form>
